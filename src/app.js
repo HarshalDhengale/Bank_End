@@ -9,11 +9,17 @@ app .use(cors({
     credentials : true
 }))
 
-app.use(express.json({limit:"16kb"})) //-->json se kita data lena hai limit hai uski
+app.use(express.json({limit:"16kb"})) //-->json se kitta data lena hai limit hai uski
 app.use(express.urlencoded({extended:true,limit : "16kb"})) //-->url se data ata hai to configure karana padata hai 
 app.use(express.static("public"))
 app.use(cookieParser()) //-->thired party cookeis mai kam karane ke liye
 
 
+
+// routes 
+import userRouter from  './routes/user.routes.js'
+
+//routes Declaration
+app.use("/api/v20.11.0/users",userRouter)
 
 export {app}
