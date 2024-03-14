@@ -18,7 +18,7 @@ const userSchema = new Schema({
         lowercase : true,
         trim : true   
     }, 
-    fullname: {
+    fullName: {
         type : String,
         required : true,
         trim : true,
@@ -40,7 +40,7 @@ const userSchema = new Schema({
         required : [true, 'Password is required']
     },
     refreshToken: {
-        type : string
+        type : String
     }
 
 },{timestamps:true})
@@ -48,7 +48,7 @@ const userSchema = new Schema({
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next();  //--> modify karana hai ki nahi password
 
-   this.password = bcrypt.hash(this.password,10)    //-->encrypt karata hai password ko ye function
+   this.password = await bcrypt.hash(this.password,10)    //-->encrypt karata hai password ko ye function
    next()
 })
 
@@ -61,7 +61,7 @@ userSchema.methods.generateAccessToken = function(){            //--> generate a
         _id : this._id,
         email : this.email,
         username : this.username,
-        fullname : this.fullname
+        fullName : this.fullName
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -74,7 +74,7 @@ userSchema.methods.generateRefreshToken = function(){          //-->generate ref
         _id : this._id,
         email : this.email,
         username : this.username,
-        fullname : this.fullname
+        fullName : this.fullName
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
@@ -83,4 +83,6 @@ userSchema.methods.generateRefreshToken = function(){          //-->generate ref
     )
 }
 
-export const user = mongoose.model("user",userSchema)
+export const User = mongoose.model("User",userSchema)
+
+
