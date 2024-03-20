@@ -3,6 +3,7 @@ import { ApiError} from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import{ uploadOnCloudinary } from "../utils/cloudinary.js" 
 import { ApiResponse } from "../utils/ApiResponse.js"
+// import { json } from "body-parser"
 
 
 
@@ -285,7 +286,7 @@ const updateAccountDetail = asyncHandler(async (req ,res )=>{
         throw new ApiError (400,"fullname or email is required")
     }
 
-     const user = User.findByIdAndUpdate( req.user?._id,
+     const user =  await User.findByIdAndUpdate( req.user?._id,
         {
             $set : {
                 fullName : fullName,
@@ -314,7 +315,7 @@ const updateUserAvatar = asyncHandler(async (req ,res )=>{
         throw new ApiError(400,"Error while upload on avatar")
      }
 
-      const user =  User.findByIdAndUpdate(req.user?._id,
+      const user =   await User.findByIdAndUpdate(req.user?._id,
         {
             $set : {
                 avatar : avatar.url
@@ -342,7 +343,7 @@ const updateUserCoverImage = asyncHandler(async (req ,res )=>{
         throw new ApiError(400,"Error while upload on coverimage")
      }
 
-      const user =  User.findByIdAndUpdate(req.user?._id,
+      const user = await User.findByIdAndUpdate(req.user?._id,
         {
             $set : {
                 coverImage : coverImage.url
@@ -356,6 +357,75 @@ const updateUserCoverImage = asyncHandler(async (req ,res )=>{
     
 })
 
+const getUserChannelProfile = asyncHandler(async( req , res ) =>{
+    const {username} =  req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400,"User is missing")
+    }
+
+    const channel = User.aggregate([{
+        $match : {
+            username : username?.toLowerCase()
+        }
+    },
+    {
+        $lookup : {
+            from : "subscriptions",
+            localField : "_id",
+            foreignField : "channel",
+            as : "subsribers"
+        }
+    },
+    {
+        $lookup : {
+            from : "subscriptions",
+            localField : "_id",
+            foreignField : " subsriber",
+            as : "subsribedTo"
+        }
+    },
+        {
+            $addFields : {
+                 subcribersCount : {
+                    $size : "$subsribers"
+                 },
+                 channelsubcribedToCount : {
+                    $size : "$subsribedTo"
+                 },
+                 isSubscribed : {
+                    if : {$in : [req.user?._id,subsribers. subsriber]},
+                    then : true,
+                    else : false
+                 }
+            }
+        },
+        {
+            $project : {
+                fullName : 1,
+                username : 1,
+                subcribersCount : 1,
+                channelsubcribedToCount : 1,
+                isSubscribed  : 1,
+                avatar : 1,
+                coverImage : 1,
+                email : 1
+
+            }
+        }
+    ])
+
+    if(!channel?.length){
+    throw new ApiError(400,"Channel does not exist")
+    }
+
+    return res
+    .status(200),
+    json(
+        new ApiResponse(200,channel[0],"User channel Fetched successfully"))
+    
+})
+
 export {
     registerUser,
     loginUser,
@@ -365,6 +435,7 @@ export {
     getCurrentUser,
     updateAccountDetail,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
 
